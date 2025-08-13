@@ -5,7 +5,8 @@ description = "Minimal sync sample using rigging with AWS Bedrock Claude for loc
 requires-python = ">=3.11"
 dependencies = [
     "rigging",
-    "python-dotenv"
+    "python-dotenv",
+    "boto3"
 ]
 
 [build-system]
