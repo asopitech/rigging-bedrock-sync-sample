@@ -1,0 +1,13 @@
+[project]
+name = "rigging-bedrock-sync-sample"
+version = "0.1.0"
+description = "Minimal sync sample using rigging with AWS Bedrock Claude for local and Lambda execution"
+requires-python = ">=3.11"
+dependencies = [
+    "rigging",
+    "python-dotenv"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
