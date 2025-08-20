@@ -1,9 +1,10 @@
 # rigging-bedrock-sync-sample
 
-Python で `rigging` を用いて AWS Bedrock 上の Claude を呼び出す最小実行サンプル。ローカル実行と AWS Lambda 実行の両方に対応。
+Python で `rigging` を用いて AWS Bedrock 上の Claude を呼び出す最小実行サンプル。ローカル実行と AWS Lambda 実行の両方に対応し、**Pydantic モデル（`rg.Model`）による構造化出力**をサポート。
 
 **主な特徴：**
 - ✅ 同期エントリポイント（`asyncio.get_event_loop().run_until_complete`使用）
+- ✅ **構造化出力**: `xml_example()` → `.until_parsed_as(Model)` → `.parse(Model)` で厳格な型抽出
 - ✅ rigging と python-dotenv のみの最小依存
 - ✅ ローカルとLambda両対応
 - ✅ 適切なエラーハンドリングとトラブルシューティングガイド
@@ -11,8 +12,8 @@ Python で `rigging` を用いて AWS Bedrock 上の Claude を呼び出す最�
 
 **使用方法：**
 1. `.env.example` → `.env` にコピーして設定
-2. `python -m app.main` でローカル実行
-3. Lambda では `app.handler.lambda_handler` を指定
+2. `python -m app.main` でローカル実行（構造化カタログが生成される）
+3. Lambda では `app.handler.lambda_handler` を指定（JSON形式で構造化カタログを返す）
 
 ## 前提
 
@@ -120,6 +121,28 @@ ZIP パッケージまたはコンテナイメージでデプロイ可能。最�
 - Lambda 実行: 実行ロールの権限を確認
 - AWS SSO の場合: 有効なセッションがあるか確認
 
+## 構造化出力について
+
+このプロジェクトでは rigging の **Pydantic モデル（`rg.Model`）** を使用して構造化された出力を取得します：
+
+### 仕組み
+
+1. **モデル定義**: `app/models.py` で `Product` と `Catalog` クラスを定義
+2. **タグ例の提示**: `Catalog.xml_example()` をプロンプトに含めて Claude に構造を示す
+3. **厳格な抽出**: `.until_parsed_as(Catalog)` で構造化を強制し、`.parse(Catalog)` で型安全に取得
+
+### サンプル出力
+
+```python
+{
+    'items': [
+        {'name': 'ノートPC', 'price': 89800.0, 'in_stock': True},
+        {'name': 'ワイヤレスマウス', 'price': 3980.0, 'in_stock': False},
+        {'name': 'モニター', 'price': 24800.0, 'in_stock': True}
+    ]
+}
+```
+
 ## プロジェクト構成
 
 ```
@@ -130,7 +153,19 @@ rigging-bedrock-sync-sample/
 ├── .gitignore
 └── app/
     ├── __init__.py
-    ├── core.py        # 非同期の実処理（内部用）
+    ├── models.py      # Pydantic モデル（rg.Model）定義
+    ├── core.py        # 非同期の実処理（構造化出力抽出）
     ├── main.py        # ローカル実行用：同期エントリポイント
     └── handler.py     # Lambda用：同期ハンドラー
 ```
+
+## トラブルシューティング（構造化出力関連）
+
+### 構造化出力の解析失敗
+
+- **症状**: `MaxDepth` エラーや整合性エラー
+- **対策**: 
+  - タグ例をより具体的にする
+  - プロンプトに属性の説明を追加する
+  - `max_depth` パラメータを増やす
+  - モデルの応答形式を確認する

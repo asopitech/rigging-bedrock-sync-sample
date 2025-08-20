@@ -1,7 +1,7 @@
 import os
 import asyncio
 from dotenv import load_dotenv
-from app.core import chat_once
+from app.core import generate_catalog
 
 
 def _setup_env():
@@ -28,14 +28,19 @@ def _setup_env():
 
 def run():
     """
-    ローカル実行用の同期エントリポイント
+    ローカル実行用の同期エントリポイント - 構造化出力でカタログを生成
     """
     model_id = _setup_env()
     loop = asyncio.get_event_loop()
     
     try:
-        res = loop.run_until_complete(chat_once(model_id, "こんにちは、同期ハンドラーのテストです。"))
-        print(res)
+        # サンプルメッセージでカタログを生成
+        message = "3つの商品のカタログを作成してください。catalogに、product(name: str, price: float, in_stock: bool)を3つ含めて返してください。例：ノートパソコン(89800円、在庫あり)、ワイヤレスマウス(2980円、在庫あり)、USB-Cハブ(4500円、在庫なし)"
+        catalog = loop.run_until_complete(generate_catalog(model_id, message))
+        
+        # 結果を整形して出力
+        print(f"Generated Catalog: {catalog}")
+        
     except Exception as e:
         raise RuntimeError(
             f"{e}\n"
